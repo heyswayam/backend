@@ -1,7 +1,7 @@
 import { type } from 'express/lib/response';
 import mongoose, { Schema } from 'mongoose';
-import jwt from "jsonwebtoken"
-import bcrypt from "bcrypt"
+import bcrypt, { compare, hash } from "bcrypt"
+
 const userSchema = new Schema(
     {
         username: {
@@ -48,4 +48,20 @@ const userSchema = new Schema(
         timestamps: true 
     }
 );
+
+//bcrypt helps in hashing the password
+
+// here not using arrow function, since it doesn't have access to 'this' keyword
+userSchema.pre('save', async function(next) {
+    if(this.isModified("password")){
+        this.password = await bcrypt.hash(myPlaintextPassword, saltRounds);
+    }
+    return next();
+  });
+
+  // user defined custom method to check if password matches
+
+userSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password,this.password) //returns boolean
+}
 export const User = mongoose.model("User",userSchema)
