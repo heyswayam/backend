@@ -1,5 +1,5 @@
 /*
-higher order function : the functions meaning it returns another function
+higher order function : the functions that can accept functions in parameter and returns another function
 
 The req, res, and next arguments are provided by the Express.js framework when it calls the middleware function. Here's a step-by-step explanation:
 
@@ -32,4 +32,16 @@ const asyncHandler = (fn) => {
         }
     };
 };
+
+const handler = (fn)=> async(req,res,next)=>{
+    try{
+        await fn(req,res,res);
+    }
+    catch(err){
+        res.status(err.code || 500).json({
+            success: false,
+            message: err.message,
+        })
+    }
+}
 export {asyncHandler};
