@@ -1,6 +1,7 @@
 import { type } from 'express/lib/response';
 import mongoose, { Schema } from 'mongoose';
-import bcrypt, { compare, hash } from "bcrypt"
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
 
 const userSchema = new Schema(
     {
@@ -59,9 +60,36 @@ userSchema.pre('save', async function(next) {
     return next();
   });
 
-  // user defined custom method to check if password matches
+  // user defined custom methods
 
+//to check if password matches
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password,this.password) //returns boolean
+}
+
+userSchema.methods.generateAccessToken = function(){
+    return jwt.sign({
+        _id: this._id,
+        email: this.email,
+        username: this.username
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+    }
+    )
+}
+
+userSchema.methods.generateRefreshToken = function(){
+    return jwt.sign({
+        _id: this._id,
+        email: this.email,
+        username: this.username
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+    }
+    )
 }
 export const User = mongoose.model("User",userSchema)
