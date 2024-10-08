@@ -1,4 +1,4 @@
-// express doesn't gives any classes to handle error yet, so neet to define this things by ourselves
+// made a custom class, to standardise the response (give same kind of response everytime)
 class ApiResponse {
     constructor(statusCode, data, message = "Success"){
         this.statusCode = statusCode;

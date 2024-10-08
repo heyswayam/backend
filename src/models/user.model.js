@@ -1,4 +1,3 @@
-import { type } from 'express/lib/response';
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
@@ -42,7 +41,7 @@ const userSchema = new Schema(
         ],
         password: {
             type: String,
-            required: [True, 'Password is required'],
+            required: [true, 'Password is required'],
         },
     },
     {
@@ -55,7 +54,7 @@ const userSchema = new Schema(
 // here not using arrow function, since it doesn't have access to 'this' keyword
 userSchema.pre('save', async function(next) {
     if(this.isModified("password")){
-        this.password = await bcrypt.hash(myPlaintextPassword, saltRounds);
+        this.password = await bcrypt.hash(this.password, 10);
     }
     return next();
   });
