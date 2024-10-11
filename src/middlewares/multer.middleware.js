@@ -1,6 +1,6 @@
 import multer from"multer"
 
-//this function is used to store in the local storage 
+//this function is used to store files in the local storage 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, './public/temp')

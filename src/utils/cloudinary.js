@@ -17,8 +17,9 @@ const upoloadOnCloudinary = async (localFilePath) => {
             )
             .catch((error) => {
                 console.log(error);
-            });
-        fs.unlinkSync(localFilePath);
+            }).finally(()=>fs.unlinkSync(localFilePath)); //unlincSync means deleting
+            console.log(uploadResult);
+            
         return uploadResult;
     } catch (error) {
         console.log(error);
