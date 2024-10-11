@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { registerUser,loginUser,logoutUser } from '../controllers/user.controller.js';
+import { registerUser,loginUser,logoutUser,updateRefreshandAccessToken } from '../controllers/user.controller.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { verifyJWTToken } from '../middlewares/auth.middleware.js';
 
@@ -16,4 +16,6 @@ UserRoute.route('/register').post(
 UserRoute.route('/login').post(loginUser)
 //middleware ko reference do, execute mat kro (vid:16, 55:10)
 UserRoute.route('/logout').post(verifyJWTToken,logoutUser)
+
+UserRoute.route('/refresh-token').post(verifyJWTToken,updateRefreshandAccessToken);
 export {UserRoute};

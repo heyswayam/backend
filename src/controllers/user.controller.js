@@ -141,4 +141,23 @@ const logoutUser = asyncHandler(async(req,res)=>{
 
     return res.status(200).clearCookie("accessToken",options).clearCookie("refreshToken",options).json(new ApiResponse(200,{},"User logged out successfully"))
 })
-export { registerUser, loginUser, logoutUser };
+
+const updateRefreshandAccessToken = asyncHandler(async(req,res)=>{
+    const user = await User.findById(req.user._id);
+    const incomingRefreshToken = req.cookies["refreshToken"];
+    if(incomingRefreshToken!==user.refreshToken){
+        throw new ApiError(401,"Refresh tokens doesn't match");
+    }
+    //new accessToken and refreshToken is generated
+    const {accessToken,refreshToken} = await generateAccessTokenandRefreshToken(user._id);
+    const option = {
+        //to prevent tampering with cookies at client side
+        httpOnly: true,
+        secure: true,
+    };
+    res.status(200).cookie("accessToken",accessToken,option).cookie("refreshToken",refreshToken,option).json(new ApiResponse(200,{
+        accessToken,
+        refreshToken
+    },"refreshToken and accessToken refreshed successfully"))
+})
+export { registerUser, loginUser, logoutUser, updateRefreshandAccessToken };
