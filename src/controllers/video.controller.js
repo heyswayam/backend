@@ -109,10 +109,10 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const videoTemp = await Video.findById(videoId);
     if (!videoTemp) throw new ApiError(400, 'Video was not found');
-    
+
     //It uses custom ObjectID type. Use .equals() method to compare to ObjectIDs
     if (!req.user._id.equals(videoTemp.owner)) {
-        throw new ApiError(400, 'Only the owner can update the video');
+        throw new ApiError(400, 'Only the owner can delete the video');
     }
     const video = await Video.findByIdAndDelete(videoId);
     return res
