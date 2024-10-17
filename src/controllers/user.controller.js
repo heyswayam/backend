@@ -3,6 +3,8 @@ import { ApiError } from '../utils/ApiError.js';
 import { User } from '../models/user.model.js';
 import { upoloadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { Subscription } from '../models/subscription.model.js';
+import { channel, subscribe } from 'diagnostics_channel';
 //steps
 // get name input
 //validate
@@ -72,13 +74,17 @@ const registerUser = asyncHandler(async (req, res) => {
         username,
         fullname,
         avatar: avatarUrl.secure_url,
-        coverImage: coverImageUrl?.secure_url || '',
         email,
         password,
     });
     const createdUser = await User.findById(userInstance._id).select(
         '-password '
     ); // select the attributes you dont wanna send
+
+    const selfSubcription = await Subscription.create({
+        channel:userInstance._id,
+        subscriber:userInstance._id,
+    })
     return res.status(200).json(new ApiResponse(200, createdUser));
 });
 
