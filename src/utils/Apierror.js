@@ -1,7 +1,7 @@
 class ApiError extends Error{
-    constructor(statuscode,message="some error from ApiError.js",errors=[],stack){
-        super(); // Must call super constructor in derived class before accessing 'this' or returning from derived constructor
-        this.msg = message,
+    constructor(statuscode,message="some error from ApiError.js",errors=[],stack=""){
+         // Must call super constructor in derived class before accessing 'this' or returning from derived constructor
+        super(message)
         this.statuscode = statuscode
         this.errors = errors
         this.stack = stack
