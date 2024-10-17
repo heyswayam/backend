@@ -11,19 +11,20 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 //upload to coudinary
 //make an User object and add to data-base
 const generateAccessTokenandRefreshToken = async (userId) => {
-try {
+    try {
         const user = await User.findById(userId);
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
         user.refreshToken = refreshToken;
         // prevent the validation check while saving (i.e. password,etc)
         user.save({ validateBeforeSave: false });
-    return { accessToken, refreshToken };
-
-} catch (error) {
-    throw new ApiError(500,"Some error in generating access and refresh token: "+error)
-}
-
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new ApiError(
+            500,
+            'Some error in generating access and refresh token: ' + error
+        );
+    }
 };
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -87,11 +88,14 @@ const loginUser = asyncHandler(async (req, res) => {
     //compare password
     //if successfull, give access token and refresh token
 
+    // if(req.cookies?.accessToken){
+    //     throw new ApiError(400,"User already logged in")
+    // }
+
     const { email, password } = req.body;
     // console.log(email);
     // console.log(password);
-    
-    
+
     const existedUser = await User.findOne({ email });
     if (!existedUser) {
         throw new ApiError(404, "email doesn't exists");
@@ -111,9 +115,10 @@ const loginUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: true,
     };
-    return res.status(200)
-        .cookie("accessToken",accessToken,option)
-        .cookie("refreshToken",refreshToken,option)
+    return res
+        .status(200)
+        .cookie('accessToken', accessToken, option)
+        .cookie('refreshToken', refreshToken, option)
         .json(
             new ApiResponse(
                 200,
@@ -129,35 +134,128 @@ const loginUser = asyncHandler(async (req, res) => {
     // return res.status(200).json(new ApiResponse(200,"successfull"))
 });
 
-
-const logoutUser = asyncHandler(async(req,res)=>{
-    const currentUser =await User.findById(req.user._id);
+const logoutUser = asyncHandler(async (req, res) => {
+    const currentUser = await User.findById(req.user._id);
     currentUser.refreshToken = undefined;
     await currentUser.save({ validateBeforeSave: false });
-    const options={
-        secure:true,
-        httpOnly:true
-    }
+    const options = {
+        secure: true,
+        httpOnly: true,
+    };
 
-    return res.status(200).clearCookie("accessToken",options).clearCookie("refreshToken",options).json(new ApiResponse(200,{},"User logged out successfully"))
-})
+    return res
+        .status(200)
+        .clearCookie('accessToken', options)
+        .clearCookie('refreshToken', options)
+        .json(new ApiResponse(200, {}, 'User logged out successfully'));
+});
 
-const updateRefreshandAccessToken = asyncHandler(async(req,res)=>{
+const updateRefreshandAccessToken = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
-    const incomingRefreshToken = req.cookies["refreshToken"];
-    if(incomingRefreshToken!==user.refreshToken){
-        throw new ApiError(401,"Refresh tokens doesn't match");
+    const incomingRefreshToken = req.cookies['refreshToken'];
+    if (incomingRefreshToken !== user.refreshToken) {
+        throw new ApiError(401, "Refresh tokens doesn't match");
     }
     //new accessToken and refreshToken is generated
-    const {accessToken,refreshToken} = await generateAccessTokenandRefreshToken(user._id);
+    const { accessToken, refreshToken } =
+        await generateAccessTokenandRefreshToken(user._id);
     const option = {
         //to prevent tampering with cookies at client side
         httpOnly: true,
         secure: true,
     };
-    res.status(200).cookie("accessToken",accessToken,option).cookie("refreshToken",refreshToken,option).json(new ApiResponse(200,{
-        accessToken,
-        refreshToken
-    },"refreshToken and accessToken refreshed successfully"))
+    res.status(200)
+        .cookie('accessToken', accessToken, option)
+        .cookie('refreshToken', refreshToken, option)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    accessToken,
+                    refreshToken,
+                },
+                'refreshToken and accessToken refreshed successfully'
+            )
+        );
+});
+
+const getCurrUser = asyncHandler((req,res)=>{
+    return res.status(200).json(200,
+        {
+            user:req.user
+        },
+        "successfully fetched user details"
+    )
 })
-export { registerUser, loginUser, logoutUser, updateRefreshandAccessToken };
+
+const changePassword = asyncHandler(async (req,res)=>{
+    try {
+        const {oldPassword,newPassword} = req.body
+        //check if oldPass is correct
+        const user = await User.findById(req.user._id)
+        const isCorrect = await user.isPasswordCorrect(oldPassword)
+        if(!isCorrect) throw new ApiError(401,"Old password do not match");
+        // const user = User.findById(req.user._id);
+        user.password=newPassword;
+        user.save()
+    } catch (error) {
+        throw new ApiError(400,"Error in changing password: "+error)
+    }
+    return res.status(200).json(new ApiResponse(200,{},"password changed successfully"))
+})
+
+const getUserProfile = asyncHandler(async(req,res)=>{
+    const {username} = req.params
+    if(!username){
+        throw new ApiError(400,"Username is missing from params");
+    }
+    const channel = await User.aggregate([
+        {$match: {
+            username: username
+        }},
+        {$lookup:{
+            from:"subscriptions", //foreign table
+            as:"subscribers",
+            localField:"_id", //local primary key
+            foreignField:"channel", //foreign primary key
+        }},
+        {$lookup:{
+            from:"subscriptions",
+            as:"subscribedTo",
+            localField:"_id",
+            foreignField:"subscriber"
+        }},
+        {$addFields:{
+            subscriberCount:{$size: "subscribers"},
+            channelSubscribedToCoutn:{$size:"subscribedTo"},
+            //skipping isSubscribe to over here, I beleive it's nto required here
+        }},
+        {$project:{
+            fullname:1,
+            username:1,
+            subscriberCount:1,
+            channelSubscribedToCoutn:1,
+            avatar:1,
+            coverImage:1,
+            email:1
+        }}
+    ])
+
+    if(channel.length==0){
+        throw new ApiError(404,"Channel doesn't exists")
+    }
+    return res.status(200).json(new ApiResponse(200,channel[0],"User details received successfully"))
+})
+
+// const getWatchHistory = asyncHandler(async(req,res)=>{
+//     const user = User.aggregate([{$match:{_id:req.user._id}},
+//         {$lookup:{
+//             from:"videos",
+//             localField:"watchHistory",
+//             foreignField:"_id",
+//             as:"watchHistorry"
+//         }}
+//     ])
+// })
+export { registerUser, loginUser, logoutUser, updateRefreshandAccessToken,changePassword,getCurrUser };
+

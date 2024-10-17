@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 const verifyJWTToken = asyncHandler(async (req, res, next) => {
     try {
         const accessToken = req.cookies?.accessToken;
-        if (!accessToken) throw new ApiError(500, 'dffdError getting access token');
+        if (!accessToken) throw new ApiError(500, 'wrong access token or User is not logged in');
 
         const data = await jwt.verify(
             accessToken,

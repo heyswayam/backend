@@ -1,9 +1,9 @@
-import mongoose, { Schema, Scheme } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 
-const videoSchema = new Scheme({
-    videoFile:{
+const videoSchema = new Schema({
+    videoFileUrl:{
         type: String, //cloudinary url
         required: true
     },

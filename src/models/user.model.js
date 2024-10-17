@@ -59,6 +59,7 @@ userSchema.pre('save', async function (next) {
     if (this.isModified('password')) {
         this.password = await bcrypt.hash(this.password, 10);
     }
+    // next means pass on to the next function
     return next();
 });
 

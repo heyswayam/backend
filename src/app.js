@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import {UserRoute} from "./routes/user.routes.js";
+import { VideoRoute } from "./routes/video.routes.js";
 const app = express();
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
@@ -20,5 +21,5 @@ app.use(cookieParser())
 
 //ROUTES DECLARATION
 app.use("/users",UserRoute);
-
+app.use("/video",VideoRoute)
 export {app}
